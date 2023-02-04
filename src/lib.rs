@@ -1,3 +1,5 @@
+mod graphql;
+
 use clap::Parser;
 
 #[derive(Parser, Clone, Debug)]
