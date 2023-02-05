@@ -1,8 +1,11 @@
-use field33_challenge::*;
+use anyhow::Result;
 use clap::Parser;
+use field33_challenge::*;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<()> {
     tracing_subscriber::fmt::init();
     let options = Options::parse();
+    options.run().await?;
+    Ok(())
 }

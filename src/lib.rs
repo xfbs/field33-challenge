@@ -1,9 +1,5 @@
-mod graphql;
+pub mod graphql;
+mod options;
+mod service;
 
-use clap::Parser;
-
-#[derive(Parser, Clone, Debug)]
-pub struct Options {
-}
-
-
+pub use options::Options;
