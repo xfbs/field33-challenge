@@ -10,4 +10,6 @@ pub struct Options {
     pub username: String,
     #[clap(long, short, default_value = "localpw")]
     pub password: String,
+    #[clap(long, short, default_value = "0.0.0.0:8000")]
+    pub listen: SocketAddr,
 }

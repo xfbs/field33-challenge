@@ -1,51 +1,51 @@
 use async_graphql::*;
 
 #[derive(SimpleObject)]
-struct NodeRelationship {
+pub struct NodeRelationship {
     /// Internal Neo4j ID of the node
-    _id: usize,
+    pub _id: usize,
     /// Internal Neo4j ID of the start node
-    _startId: usize,
+    pub _startId: usize,
     /// Internal Neo4j ID of the end node
-    _endId: usize,
-    relationshipType: String,
-    startNode: GraphNode,
-    endNode: GraphNode,
+    pub _endId: usize,
+    pub relationshipType: String,
+    pub startNode: GraphNode,
+    pub endNode: GraphNode,
 }
 
 #[derive(SimpleObject)]
-struct GraphNode {
+pub struct GraphNode {
     /// The internal Neo4j ID of the node
-    _id: usize,
+    pub _id: usize,
     /// Outward facing identifier of a node
-    uri: usize,
-    labels: Vec<String>,
-    relationships: Vec<NodeRelationship>,
-    numberOfNeighbors: usize,
+    pub uri: usize,
+    pub labels: Vec<String>,
+    pub relationships: Vec<NodeRelationship>,
+    pub numberOfNeighbors: usize,
 }
 
-struct Query;
+pub struct Query;
 
 #[Object]
 impl Query {
-    async fn howdy(&self) -> &'static str {
-        "partner"
+    pub async fn graphNodes(&self) -> Vec<GraphNode> {
+        vec![]
     }
 }
 
-struct Mutation;
+pub struct Mutation;
 
 #[Object]
 impl Mutation {
-    async fn createGraphNode(&self, label: String) -> GraphNode {
+    pub async fn createGraphNode(&self, label: String) -> GraphNode {
         todo!()
     }
 
-    async fn deleteGraphNode(&self, uri: usize) -> usize {
+    pub async fn deleteGraphNode(&self, uri: usize) -> usize {
         todo!()
     }
 
-    async fn createNodeRelationship(
+    pub async fn createNodeRelationship(
         &self,
         startNodeUri: usize,
         endNodeUri: usize,
