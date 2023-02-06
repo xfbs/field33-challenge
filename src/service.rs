@@ -1,3 +1,4 @@
+/// HTTP Service implementation
 use crate::graphql::{Mutation, Query};
 use crate::options::Options;
 use anyhow::{anyhow, Context, Result};
@@ -24,6 +25,7 @@ async fn graphiql() -> impl IntoResponse {
 }
 
 impl Options {
+    /// Connect to database
     pub async fn database(&self) -> Result<Pool> {
         let domain_name = match self.database.scheme() {
             "bolt" => None,
@@ -72,25 +74,37 @@ impl Options {
         Ok(pool)
     }
 
+    /// Create axum router for HTTP service
     pub async fn service(&self, database: Pool) -> Result<Router<(), Body>> {
+        // build GraphQL schema
         let schema = Schema::build(Query, Mutation, EmptySubscription)
             .extension(Tracing)
             .data(database.clone())
             .finish();
+
+        // build axum router
         let router = Router::new()
             .route("/graphql", post(graphql))
             .route("/", get(graphiql))
             .layer(Extension(schema));
+
         Ok(router)
     }
 
+    /// Run service
+    ///
+    /// This will block until the service is terminated.
     pub async fn run(self) -> Result<()> {
+        // connect to database
         let database = self.database().await.context("Connecting to database")?;
+
+        // create router
         let router = self
             .service(database.clone())
             .await
             .context("Launching service")?;
 
+        // launch HTTP server
         Server::bind(&self.listen)
             .serve(router.into_make_service())
             .await?;

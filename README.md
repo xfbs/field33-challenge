@@ -4,7 +4,7 @@ GraphQL backend for abstract graph editor.
 
 ## Statistics
 
-Execution time: ~7 hours.
+Execution time: ~8 hours.
 
 ## Running
 
@@ -31,18 +31,18 @@ Get all graph nodes:
 
 ```
 query GetGraphNodes {
-	graphNodes {
-		_id
-		uri
-		labels
-		relationships {
-			_startId
-			_endId
-			endNode {
-				uri
-			}
-		}
-	}
+    graphNodes {
+        _id
+        uri
+        labels
+        relationships {
+            _startId
+            _endId
+            endNode {
+                uri
+            }
+        }
+    }
 }
 ```
 
@@ -80,3 +80,13 @@ mutation CreateGraphNode {
 - Neighbor count is wrong (I'm counting all relations).
 - Delete graph node always returns zero.
 - Logging could be improved (seems like GraphQL tracing is not working)
+- Use of `unwrap()` in codebase
+- Injection vulnerability
+
+## Improvements
+
+- Metrics (hooked up to Prometheus)
+- Authentication
+- Load shedding
+- Pagination, perhaps
+- Unit tests

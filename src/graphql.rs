@@ -1,3 +1,4 @@
+/// GraphQL types and implementations
 use anyhow::anyhow;
 use async_graphql::{types::ID, *};
 use bolt_client::Metadata;
@@ -9,6 +10,7 @@ use deadpool_bolt::{Object, Pool};
 use rand::{thread_rng, Rng};
 use std::collections::{BTreeMap, BTreeSet};
 
+/// Describes the relationship between two nodes (verices)
 #[derive(SimpleObject, PartialOrd, Ord, Clone, Debug, PartialEq, Eq)]
 #[graphql(complex)]
 pub struct NodeRelationship {
@@ -26,6 +28,7 @@ pub struct NodeRelationship {
     pub relationship_type: String,
 }
 
+/// Fetch a single GraphNode
 async fn node_get(conn: &mut Object, id: i64) -> Result<GraphNode> {
     let params = [("id", id)].into_iter().collect();
     let response = conn
@@ -81,6 +84,7 @@ async fn node_get(conn: &mut Object, id: i64) -> Result<GraphNode> {
     Ok(node)
 }
 
+/// Fetch all nodes
 async fn node_all(conn: &mut Object) -> Result<Vec<GraphNode>> {
     // get all nodes
     let response = conn.run("MATCH (n) RETURN n", None, None).await?;
@@ -154,6 +158,7 @@ impl NodeRelationship {
     }
 }
 
+/// Describes a single node
 #[derive(SimpleObject)]
 pub struct GraphNode {
     /// Internal Neo4j ID of the node
@@ -185,6 +190,9 @@ pub struct Mutation;
 
 #[Object]
 impl Mutation {
+    /// Create a new graph node with the given label
+    ///
+    /// Will allocate a new, random URI for the node
     #[graphql(name = "createGraphNode")]
     pub async fn create_graph_node(&self, ctx: &Context<'_>, label: String) -> Result<GraphNode> {
         let mut conn = ctx.data::<Pool>()?.get().await?;
@@ -220,6 +228,7 @@ impl Mutation {
         node_get(&mut conn, id).await
     }
 
+    /// Delete the graph node with the given URI
     #[graphql(name = "deleteGraphNode")]
     pub async fn delete_graph_node(
         &self,
@@ -238,6 +247,7 @@ impl Mutation {
         Ok(0)
     }
 
+    /// Create a relationship between two nodes by their URI
     #[graphql(name = "createNodeRelationship")]
     pub async fn create_node_relationship(
         &self,
