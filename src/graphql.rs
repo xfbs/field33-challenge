@@ -6,6 +6,7 @@ use bolt_proto::{
     value::{Node, Relationship},
 };
 use deadpool_bolt::{Object, Pool};
+use rand::{thread_rng, Rng};
 use std::collections::{BTreeMap, BTreeSet};
 
 #[derive(SimpleObject, PartialOrd, Ord, Clone, Debug, PartialEq, Eq)]
@@ -184,20 +185,54 @@ pub struct Mutation;
 
 #[Object]
 impl Mutation {
-    pub async fn create_graph_node(&self, label: String) -> GraphNode {
+    #[graphql(name = "createGraphNode")]
+    pub async fn create_graph_node(&self, ctx: &Context<'_>, label: String) -> Result<GraphNode> {
+        let mut conn = ctx.data::<Pool>()?.get().await?;
+
+        // generate random uri
+        let uri = format!("http://example.com/entity/{}", thread_rng().gen::<u32>());
+
+        // insert new node
+        // cannot set label dynamically: https://github.com/neo4j/neo4j/issues/4334
+        // this here is a potential injection vulnerability.
+        let params = [("uri", uri)].into_iter().collect();
+        let response = conn
+            .run(
+                &format!("CREATE (n:{label} {{ uri: $uri }}) RETURN ID(n)"),
+                Some(params),
+                None,
+            )
+            .await?;
+        Success::try_from(response)?;
+        let metadata = Metadata::from_iter(vec![("n", 1)]);
+        let (records, response) = conn.pull(Some(metadata)).await?;
+        Success::try_from(response)?;
+        let id: i64 = records
+            .get(0)
+            .ok_or(anyhow!("Missing record for node insertion"))?
+            .fields()
+            .get(0)
+            .ok_or(anyhow!("Missing field for node insertion record"))?
+            .clone()
+            .try_into()?;
+
+        // fetch node
+        node_get(&mut conn, id).await
+    }
+
+    #[graphql(name = "deleteGraphNode")]
+    pub async fn delete_graph_node(&self, ctx: &Context<'_>, uri: String) -> Result<usize> {
         todo!()
     }
 
-    pub async fn delete_graph_node(&self, uri: usize) -> usize {
-        todo!()
-    }
-
+    #[graphql(name = "createNodeRelationship")]
     pub async fn create_node_relationship(
         &self,
+        ctx: &Context<'_>,
         start_node_uri: usize,
         end_node_uri: usize,
         relationship_type: String,
-    ) -> NodeRelationship {
+    ) -> Result<NodeRelationship> {
         todo!()
     }
 }
