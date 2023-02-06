@@ -19,7 +19,7 @@ pub struct NodeRelationship {
     #[graphql(name = "_startId")]
     pub start_id: i64,
     /// Internal Neo4j ID of the end node
-    #[graphql(name = "_endID")]
+    #[graphql(name = "_endId")]
     pub end_id: i64,
     /// Type of relationship
     #[graphql(name = "relationshipType")]
