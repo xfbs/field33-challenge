@@ -10,10 +10,8 @@ use axum::{
     Extension, Router, Server,
 };
 use bolt_client::*;
-use bolt_proto::{message::*, value::*, version::*, Message, Value};
+use bolt_proto::version::*;
 use deadpool_bolt::{bolt_client::Metadata, Manager, Pool};
-use tokio::io::BufStream;
-use tokio_util::compat::*;
 
 type Schema = async_graphql::Schema<Query, Mutation, EmptySubscription>;
 
@@ -37,7 +35,10 @@ impl Options {
             ),
             scheme => return Err(anyhow!("Unrecognized protocol: {scheme}")),
         };
-        let socket_addrs = self.database.socket_addrs(|| Some(7687))?;
+        let socket_addrs = self
+            .database
+            .socket_addrs(|| Some(7687))
+            .context("Looking up socket addresses for database host")?;
 
         let manager = Manager::new(
             &socket_addrs[..],
@@ -53,13 +54,19 @@ impl Options {
                 ("credentials", &self.password),
             ]),
         )
-        .await?;
+        .await
+        .context("Launching database connection pool manager")?;
 
         // start connection pool
-        let pool = Pool::builder(manager).build()?;
+        let pool = Pool::builder(manager)
+            .build()
+            .context("Building database connection pool manager")?;
 
         // make sure we are connected
-        let mut conn = pool.get().await?;
+        let conn = pool
+            .get()
+            .await
+            .context("Fetching connection from connection pool manager")?;
         drop(conn);
 
         Ok(pool)
@@ -78,8 +85,11 @@ impl Options {
     }
 
     pub async fn run(self) -> Result<()> {
-        let database = self.database().await?;
-        let router = self.service(database.clone()).await?;
+        let database = self.database().await.context("Connecting to database")?;
+        let router = self
+            .service(database.clone())
+            .await
+            .context("Launching service")?;
 
         Server::bind(&self.listen)
             .serve(router.into_make_service())

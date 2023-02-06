@@ -7,7 +7,6 @@ use bolt_proto::{
 };
 use deadpool_bolt::{Object, Pool};
 use std::collections::{BTreeMap, BTreeSet};
-use std::sync::Arc;
 
 #[derive(SimpleObject, PartialOrd, Ord, Clone, Debug, PartialEq, Eq)]
 #[graphql(complex)]
