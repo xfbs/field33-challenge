@@ -221,18 +221,62 @@ impl Mutation {
     }
 
     #[graphql(name = "deleteGraphNode")]
-    pub async fn delete_graph_node(&self, ctx: &Context<'_>, uri: String) -> Result<usize> {
-        todo!()
+    pub async fn delete_graph_node(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(name = "nodeUri")] uri: String,
+    ) -> Result<usize> {
+        let mut conn = ctx.data::<Pool>()?.get().await?;
+
+        let params = [("uri", uri)].into_iter().collect();
+        let response = conn
+            .run("MATCH (n{uri: $uri}) DETACH DELETE n", Some(params), None)
+            .await?;
+        Success::try_from(response)?;
+
+        // not sure what this should return?
+        Ok(0)
     }
 
     #[graphql(name = "createNodeRelationship")]
     pub async fn create_node_relationship(
         &self,
         ctx: &Context<'_>,
-        start_node_uri: usize,
-        end_node_uri: usize,
-        relationship_type: String,
+        #[graphql(name = "startNodeUri")] start_node_uri: String,
+        #[graphql(name = "endNodeUri")] end_node_uri: String,
+        #[graphql(name = "relationshipType")] relationship_type: String,
     ) -> Result<NodeRelationship> {
-        todo!()
+        let mut conn = ctx.data::<Pool>()?.get().await?;
+
+        let params = [("start", start_node_uri), ("end", end_node_uri)]
+            .into_iter()
+            .collect();
+        let response = conn
+            .run(
+                &format!("MATCH (start{{uri:$start}}), (end{{uri:$end}}) CREATE (start)-[r:{relationship_type}]->(end) RETURN r"),
+                Some(params),
+                None,
+            )
+            .await?;
+        Success::try_from(response)?;
+        let metadata = Metadata::from_iter(vec![("n", 1)]);
+        let (records, response) = conn.pull(Some(metadata)).await?;
+        Success::try_from(response)?;
+        let relation: Relationship = records
+            .get(0)
+            .ok_or(anyhow!("No records returned from insertion"))?
+            .fields()
+            .get(0)
+            .ok_or(anyhow!("No fields returned in record"))?
+            .clone()
+            .try_into()?;
+        let node_relationship = NodeRelationship {
+            id: relation.rel_identity(),
+            start_id: relation.start_node_identity(),
+            end_id: relation.end_node_identity(),
+            relationship_type: relation.rel_type().to_string(),
+        };
+
+        Ok(node_relationship)
     }
 }

@@ -65,6 +65,18 @@ mutation DeleteGraphNode {
 }
 ```
 
+Create relationship:
+
+```
+mutation CreateGraphNode {
+    createNodeRelationship(startNodeUri: "http://example.com/entity/13", endNodeUri: "http://example.com/entity/3", relationshipType: "rel1") {
+        _id
+    }
+}
+```
+
 ## Issues
 
-Neighbor count is wrong (I'm counting all relations).
+- Neighbor count is wrong (I'm counting all relations).
+- Delete graph node always returns zero.
+- Logging could be improved (seems like GraphQL tracing is not working)
