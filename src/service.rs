@@ -66,14 +66,9 @@ impl Options {
     }
 
     pub async fn service(&self, database: Pool) -> Result<Router<(), Body>> {
-        let query = Query {
-            database: database.clone(),
-        };
-        let mutation = Mutation {
-            database: database.clone(),
-        };
-        let schema = Schema::build(query, mutation, EmptySubscription)
+        let schema = Schema::build(Query, Mutation, EmptySubscription)
             .extension(Tracing)
+            .data(database.clone())
             .finish();
         let router = Router::new()
             .route("/graphql", post(graphql))
