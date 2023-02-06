@@ -4,7 +4,7 @@ use url::Url;
 
 #[derive(Parser, Clone, Debug)]
 pub struct Options {
-    #[clap(long, short, default_value = "bolt://localhost:7687")]
+    #[clap(long, short, default_value = "bolt://127.0.0.1:7687")]
     pub database: Url,
     #[clap(long, short, default_value = "neo4j")]
     pub username: String,
